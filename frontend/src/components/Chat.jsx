@@ -1,14 +1,19 @@
 // src/components/Chat.jsx
 import React, { useEffect, useState } from "react";
 import { Container, Form, Button, ListGroup } from "react-bootstrap";
-import socket from "../socket"; // ✅ use shared connection
+import { io } from "socket.io-client";
 import axios from "axios";
+
+// Connect once globally
+const socket = io("https://revision-hub.onrender.com", {
+  transports: ["websocket"], // Force WebSocket for better performance
+  reconnectionAttempts: 5,
+});
 
 const Chat = ({ code, username }) => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
 
-  // Setup socket events once on mount
   useEffect(() => {
     console.log("📡 Joining room:", code);
     socket.emit("join", { code });
@@ -49,22 +54,18 @@ const Chat = ({ code, username }) => {
   const handleSend = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      const data = { code, sender: username, text: message };
-      console.log("📤 Sending message:", data);
-      socket.emit("message", data);
+      const payload = { code, sender: username, text: message };
+      console.log("📤 Sending message:", payload);
+      socket.emit("message", payload);
       setMessage("");
     }
   };
 
   const handleClear = async () => {
     if (window.confirm("Clear all messages?")) {
-      try {
-        await axios.delete(`https://revision-hub.onrender.com/clear/${code}`);
-        setChat([]);
-        console.log("🧹 Chat cleared.");
-      } catch (err) {
-        console.error("❌ Failed to clear chat:", err);
-      }
+      await axios.delete(`https://revision-hub.onrender.com/clear/${code}`);
+      setChat([]);
+      console.log("🧹 Chat cleared.");
     }
   };
 
