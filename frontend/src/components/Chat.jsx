@@ -4,9 +4,18 @@ import { Container, Form, Button, ListGroup } from "react-bootstrap";
 import { io } from "socket.io-client";
 import axios from "axios";
 
-// ✅ Connect to your live Render backend
+// 👇 Connect to your backend on Render
 const socket = io("https://revision-hub.onrender.com", {
   transports: ["websocket"],
+  withCredentials: false,
+});
+
+// ✅ Debug connection
+socket.on("connect", () => {
+  console.log("✅ Connected to backend socket:", socket.id);
+});
+socket.on("connect_error", (err) => {
+  console.error("❌ Socket connection failed:", err.message);
 });
 
 const Chat = ({ code, username }) => {
@@ -14,27 +23,22 @@ const Chat = ({ code, username }) => {
   const [chat, setChat] = useState([]);
 
   useEffect(() => {
-    console.log("🟢 Joining room:", code);
+    console.log("📡 Joining room:", code);
     socket.emit("join", { code });
 
     socket.on("history", (messages) => {
-      console.log("📜 Received history:", messages);
+      console.log("📜 Received chat history:", messages);
       setChat(messages);
     });
 
     socket.on("message", (data) => {
-      console.log("📩 New message received:", data);
+      console.log("📥 New message received:", data);
       setChat((prev) => [...prev, data]);
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("❌ Socket connection error:", err);
     });
 
     return () => {
       socket.off("message");
       socket.off("history");
-      socket.off("connect_error");
     };
   }, [code]);
 
@@ -63,20 +67,20 @@ const Chat = ({ code, username }) => {
   return (
     <Container className="py-4">
       <h2>Chat Room: {code}</h2>
+
       <Button variant="danger" className="mb-3" onClick={handleClear}>
         Clear Chat
       </Button>
+
       <ListGroup className="mb-3">
-        {chat.length === 0 ? (
-          <ListGroup.Item>No messages yet.</ListGroup.Item>
-        ) : (
-          chat.map((msg, idx) => (
-            <ListGroup.Item key={idx}>
-              <strong>{msg.sender}:</strong> {msg.text}
-            </ListGroup.Item>
-          ))
-        )}
+        {chat.length === 0 && <ListGroup.Item>No messages yet.</ListGroup.Item>}
+        {chat.map((msg, idx) => (
+          <ListGroup.Item key={idx}>
+            <strong>{msg.sender}:</strong> {msg.text}
+          </ListGroup.Item>
+        ))}
       </ListGroup>
+
       <Form onSubmit={handleSend}>
         <Form.Control
           type="text"
@@ -84,7 +88,7 @@ const Chat = ({ code, username }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <Button className="mt-2" type="submit">
+        <Button type="submit" className="mt-2">
           Send
         </Button>
       </Form>
