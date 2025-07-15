@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Node modules (for React)
+frontend/node_modules/
+
+# Build output (for React)
+frontend/dist/
+
+# Python virtualenv
+backend/venv/
+
+# Flask instance folder
+backend/instance/
+
+# Python bytecode
+backend/__pycache__/
+
+# Environment variables
+*.env
