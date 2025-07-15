@@ -6,9 +6,12 @@ import axios from "axios";
 // Only one socket instance
 const socket = io("https://revision-hub.onrender.com", {
   transports: ["websocket"],
-  reconnectionAttempts: 5,
-  autoConnect: false, // we’ll manually connect
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  timeout: 20000,
 });
+
 
 const Chat = ({ code, username }) => {
   const [message, setMessage] = useState("");
