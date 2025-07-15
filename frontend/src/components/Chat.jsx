@@ -1,77 +1,64 @@
-import React, { useEffect, useRef, useState } from "react";
+// src/components/Chat.jsx
+import React, { useEffect, useState, useRef } from "react";
 import { Container, Form, Button, ListGroup } from "react-bootstrap";
 import { io } from "socket.io-client";
 import axios from "axios";
 
-// Only one socket instance
-const socket = io("https://revision-hub.onrender.com", {
-  transports: ["websocket"],
-  reconnection: true,
-  reconnectionAttempts: Infinity,
-  reconnectionDelay: 1000,
-  timeout: 20000,
-});
-
+const SOCKET_URL = "https://revision-hub.onrender.com";
 
 const Chat = ({ code, username }) => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
-  const joinedRoom = useRef(false);
-  const listenersBound = useRef(false);
+  const socketRef = useRef(null);
 
+  // Connect socket on mount
   useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
-    }
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+    });
 
-    // Join room only once
-    if (!joinedRoom.current) {
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to backend socket:", socket.id);
       console.log("📡 Joining room:", code);
       socket.emit("join", { code });
-      joinedRoom.current = true;
-    }
+    });
 
-    // Bind listeners only once
-    if (!listenersBound.current) {
-      socket.on("connect", () => {
-        console.log("✅ Connected to backend socket:", socket.id);
-      });
+    socket.on("connect_error", (err) => {
+      console.error("❌ Socket connection failed:", err.message);
+    });
 
-      socket.on("connect_error", (err) => {
-        console.error("❌ Socket connection failed:", err.message);
-      });
+    socket.on("history", (messages) => {
+      console.log("📜 Received chat history:", messages);
+      setChat(messages);
+    });
 
-      socket.on("history", (messages) => {
-        console.log("📜 Received chat history:", messages);
-        setChat(messages);
-      });
-
-      socket.on("message", (data) => {
-        console.log("📥 New message received:", data);
-        setChat((prev) => [...prev, data]);
-      });
-
-      listenersBound.current = true;
-    }
+    socket.on("message", (data) => {
+      console.log("📥 New message received:", data);
+      setChat((prev) => [...prev, data]);
+    });
 
     return () => {
-      // Optional: don't disconnect entirely unless navigating away from app
+      socket.disconnect();
+      console.log("👋 Disconnected from socket");
     };
   }, [code]);
 
   const handleSend = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      const payload = { code, sender: username, text: message };
-      console.log("📤 Sending message:", payload);
-      socket.emit("message", payload);
+      const msg = { code, sender: username, text: message };
+      console.log("📤 Sending message:", msg);
+      socketRef.current.emit("message", msg);
       setMessage("");
     }
   };
 
   const handleClear = async () => {
     if (window.confirm("Clear all messages?")) {
-      await axios.delete(`https://revision-hub.onrender.com/clear/${code}`);
+      await axios.delete(`${SOCKET_URL}/clear/${code}`);
       setChat([]);
       console.log("🧹 Chat cleared.");
     }
