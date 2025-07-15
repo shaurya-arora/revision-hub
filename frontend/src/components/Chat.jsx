@@ -1,56 +1,57 @@
 // src/components/Chat.jsx
 import React, { useEffect, useState } from "react";
 import { Container, Form, Button, ListGroup } from "react-bootstrap";
-import { io } from "socket.io-client";
+import socket from "../socket"; // ✅ use shared connection
 import axios from "axios";
-
-const socket = io("https://revision-hub.onrender.com", {
-  transports: ["websocket", "polling"],
-  timeout: 10000,
-  reconnectionAttempts: 3,
-  reconnectionDelay: 3000,
-});
 
 const Chat = ({ code, username }) => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
 
+  // Setup socket events once on mount
   useEffect(() => {
     console.log("📡 Joining room:", code);
     socket.emit("join", { code });
 
-    socket.on("connect", () => {
+    const handleConnect = () => {
       console.log("✅ Connected to backend socket:", socket.id);
-    });
+    };
 
-    socket.on("connect_error", (err) => {
+    const handleConnectError = (err) => {
       console.error("❌ Socket connection failed:", err.message);
-    });
+    };
 
-    socket.on("history", (messages) => {
+    const handleHistory = (messages) => {
       console.log("📜 Received chat history:", messages);
       setChat(messages);
-    });
+    };
 
-    socket.on("message", (data) => {
+    const handleMessage = (data) => {
       console.log("📥 New message received:", data);
       setChat((prev) => [...prev, data]);
-    });
+    };
 
+    // Register listeners
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("history", handleHistory);
+    socket.on("message", handleMessage);
+
+    // Cleanup on unmount
     return () => {
-      socket.off("history");
-      socket.off("message");
-      socket.off("connect");
-      socket.off("connect_error");
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("history", handleHistory);
+      socket.off("message", handleMessage);
     };
   }, [code]);
 
   const handleSend = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      const msg = { code, sender: username, text: message };
-      console.log("📤 Sending message:", msg);
-      socket.emit("message", msg);
+      const data = { code, sender: username, text: message };
+      console.log("📤 Sending message:", data);
+      socket.emit("message", data);
       setMessage("");
     }
   };
@@ -61,8 +62,8 @@ const Chat = ({ code, username }) => {
         await axios.delete(`https://revision-hub.onrender.com/clear/${code}`);
         setChat([]);
         console.log("🧹 Chat cleared.");
-      } catch (error) {
-        console.error("❌ Error clearing chat:", error.message);
+      } catch (err) {
+        console.error("❌ Failed to clear chat:", err);
       }
     }
   };
@@ -73,7 +74,6 @@ const Chat = ({ code, username }) => {
       <Button variant="danger" className="mb-3" onClick={handleClear}>
         Clear Chat
       </Button>
-
       <ListGroup className="mb-3">
         {chat.length === 0 && <ListGroup.Item>No messages yet.</ListGroup.Item>}
         {chat.map((msg, idx) => (
@@ -82,7 +82,6 @@ const Chat = ({ code, username }) => {
           </ListGroup.Item>
         ))}
       </ListGroup>
-
       <Form onSubmit={handleSend}>
         <Form.Control
           type="text"
