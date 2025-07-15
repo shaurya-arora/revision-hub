@@ -4,11 +4,15 @@ import { Container, Form, Button, ListGroup } from "react-bootstrap";
 import { io } from "socket.io-client";
 import axios from "axios";
 
-// 👇 Connect to your backend on Render
 const socket = io("https://revision-hub.onrender.com", {
-  transports: ["websocket"],
-  withCredentials: false,
+  transports: ["polling"],
+  timeout: 10000, // 10 seconds
+  reconnectionAttempts: 3,
+  reconnectionDelay: 5000,
 });
+
+
+
 
 // ✅ Debug connection
 socket.on("connect", () => {
