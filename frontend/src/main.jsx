@@ -1,12 +1,15 @@
+// main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter } from "react-router-dom";
 
+const isProd = import.meta.env.PROD;
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter basename="/revision-hub">
+    <BrowserRouter> 
       <App />
     </BrowserRouter>
   </React.StrictMode>
