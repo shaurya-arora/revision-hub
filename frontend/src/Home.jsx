@@ -1,48 +1,79 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Form, Button } from "react-bootstrap";
+import { Container, Form, Button, Row, Col, Card } from "react-bootstrap";
 
 const Home = ({ setUsername }) => {
+  const [search, setSearch] = useState("");
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (name.trim() && code.trim()) {
-      setUsername(name);
-      navigate(`/chat/${code}`);
-    }
+    if (!name.trim() || !search.trim()) return;
+    setUsername(name.trim());
+    navigate(`/chat/${search.trim()}`);
   };
 
   return (
     <Container className="py-5">
-      <h1 className="mb-4">📘 Revision Resource Lookup</h1>
-      <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="nameInput" className="mb-3">
-          <Form.Label>Your Name</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter your name..."
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </Form.Group>
+      <div className="text-center mb-4">
+        <h1>📚 Revision Hub</h1>
+        <p className="text-muted">Search topics, past papers, mark schemes & more.</p>
+      </div>
 
-        <Form.Group controlId="codeInput" className="mb-3">
-          <Form.Label>Search Topic</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="e.g. differentiation, cell biology..."
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-        </Form.Group>
-
-        <Button variant="primary" type="submit">
-          🔍 Search
-        </Button>
+      <Form onSubmit={handleSubmit} className="mb-5">
+        <Row className="justify-content-center">
+          <Col md={3} className="mb-2">
+            <Form.Control
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Col>
+          <Col md={5} className="mb-2">
+            <Form.Control
+              type="text"
+              placeholder="e.g. a-level-chem-2019"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Col>
+          <Col md="auto">
+            <Button type="submit">Search</Button>
+          </Col>
+        </Row>
       </Form>
+
+      <Row className="g-4">
+        <Col md={4}>
+          <Card className="shadow-sm">
+            <Card.Body>
+              <Card.Title>📄 Past Papers</Card.Title>
+              <Card.Text>Explore a wide range of past papers for all subjects and boards.</Card.Text>
+              <Button variant="outline-primary" disabled>Coming Soon</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="shadow-sm">
+            <Card.Body>
+              <Card.Title>📝 Mark Schemes</Card.Title>
+              <Card.Text>Quick access to marking guides to evaluate your answers effectively.</Card.Text>
+              <Button variant="outline-primary" disabled>Coming Soon</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="shadow-sm">
+            <Card.Body>
+              <Card.Title>📚 Flashcards</Card.Title>
+              <Card.Text>Study with Quizlets and curated flashcard decks by topic.</Card.Text>
+              <Button variant="outline-primary" disabled>Coming Soon</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
 };
