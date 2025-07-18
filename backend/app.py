@@ -6,6 +6,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, join_room, emit
 import os
 import json
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret'
@@ -54,13 +55,17 @@ def handle_message(data):
     room = data['code']
     sender = data['sender']
     text = data['text']
-    message_data = {'sender': sender, 'text': text}
+    timestamp = datetime.now().strftime('%D:%H:%M')  # ✅ Add timestamp
+
+    message_data = {
+        'sender': sender,
+        'text': text,
+        'timestamp': timestamp  # ✅ Include in message
+    }
 
     chat_history.setdefault(room, []).append(message_data)
     save_chat_history(room, chat_history[room])
-    
-    print(f"💬 {sender} to {room}: {text}")
-    emit('message', message_data, to=room)
-
+    print(f"💬 [{timestamp}] Message in {room}: {sender}: {text}")
+    emit('message', message_data, room=room)
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=5000)

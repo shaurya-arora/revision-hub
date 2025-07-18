@@ -79,10 +79,12 @@ const Chat = ({ username }) => {
       <ListGroup className="mb-3">
         {chat.map((msg, idx) => (
           <ListGroup.Item key={idx}>
-            <strong>{msg.sender}:</strong> {msg.text}
+            <strong>{msg.sender}</strong>{" "}
+            <small className="text-muted">[{msg.timestamp}]</small>: {msg.text}
           </ListGroup.Item>
         ))}
       </ListGroup>
+
       <Form onSubmit={handleSend}>
         <Form.Control
           type="text"
