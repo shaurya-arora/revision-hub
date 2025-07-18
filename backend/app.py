@@ -55,7 +55,7 @@ def handle_message(data):
     room = data['code']
     sender = data['sender']
     text = data['text']
-    timestamp = datetime.now().strftime('%D:%H:%M')  # ✅ Add timestamp
+    timestamp = datetime.now().strftime('%H:%M:%S')  # ✅ Add timestamp
 
     message_data = {
         'sender': sender,
