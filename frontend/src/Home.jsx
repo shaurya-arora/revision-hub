@@ -20,7 +20,7 @@ const Home = ({ setUsername }) => {
         <h1>📚 Revision Hub</h1>
         <p className="text-muted">Search topics, past papers, mark schemes & more.</p>
       </div>
-
+      <p>Testing that update was pushed</p>
       <Form onSubmit={handleSubmit} className="mb-5">
         <Row className="justify-content-center">
           <Col md={3} className="mb-2">
