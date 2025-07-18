@@ -17,10 +17,9 @@ const Home = ({ setUsername }) => {
   return (
     <Container className="py-5">
       <div className="text-center mb-4">
-        <h1>📚 Revision Hub</h1>
+        <h1>📚 Revision Hub 2</h1>
         <p className="text-muted">Search topics, past papers, mark schemes & more.</p>
       </div>
-      <p>Testing that update was pushed</p>
       <Form onSubmit={handleSubmit} className="mb-5">
         <Row className="justify-content-center">
           <Col md={3} className="mb-2">
