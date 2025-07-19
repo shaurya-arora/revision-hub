@@ -8,12 +8,10 @@ const SOCKET_URL = "https://revision-chat-backend.fly.dev";
 
 const Chat = ({ username }) => {
   const { code } = useParams();
+  const normalizedCode = code.trim().toLowerCase(); // ✅ consistent room name
+
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingUser, setTypingUser] = useState(null);
-  const typingTimeoutRef = useRef(null);
-
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -26,7 +24,7 @@ const Chat = ({ username }) => {
 
     socket.on("connect", () => {
       console.log("✅ Connected to backend socket:", socket.id);
-      socket.emit("join", { code });
+      socket.emit("join", { code: normalizedCode });
     });
 
     socket.on("connect_error", (err) => {
@@ -42,62 +40,54 @@ const Chat = ({ username }) => {
       console.log("📥 New message received:", data);
       setChat((prev) => [...prev, data]);
     });
-    socket.on("typing", ({ sender }) => {
-      setTypingUser(sender);
-    });
-
-    socket.on("stop_typing", () => {
-      setTypingUser(null);
-    });
 
     return () => {
       socket.disconnect();
       console.log("👋 Disconnected from socket");
     };
-  }, [code]);
+  }, [normalizedCode]);
 
-  // 🔄 Periodic re-join to stay in sync
+  // 🔄 Periodic re-join to ensure sync
   useEffect(() => {
     const interval = setInterval(() => {
       if (socketRef.current?.connected) {
         console.log("🔁 Periodic room re-join");
-        socketRef.current.emit("join", { code });
+        socketRef.current.emit("join", { code: normalizedCode });
       }
-    }, 30000); // every 30 seconds
+    }, 30000); // every 30s
 
     return () => clearInterval(interval);
-  }, [code]);
+  }, [normalizedCode]);
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-    const msg = { code, sender: username, text: message };
+    const msg = {
+      code: normalizedCode,
+      sender: username,
+      text: message,
+    };
     socketRef.current.emit("message", msg);
     setMessage("");
   };
 
   const handleClear = async () => {
-    await axios.delete(`${SOCKET_URL}/clear/${code}`);
+    await axios.delete(`${SOCKET_URL}/clear/${normalizedCode}`);
     setChat([]);
   };
 
   return (
     <Container className="py-4">
-      <h2>Chat Room: {code}</h2>
+      <h2>Chat Room: {normalizedCode}</h2>
       <Button variant="danger" className="mb-3" onClick={handleClear}>
         Clear Chat
       </Button>
-      {typingUser && (
-        <div className="text-muted mb-2">
-          <em>{typingUser} is typing...</em>
-        </div>
-      )}
-
       <ListGroup className="mb-3">
         {chat.map((msg, idx) => (
           <ListGroup.Item key={idx}>
             <strong>{msg.sender}</strong>{" "}
-            <small className="text-muted">[{msg.timestamp}]</small>: {msg.text}
+            <small className="text-muted">[{msg.timestamp || "???"}]</small>:{" "}
+            {msg.text}
           </ListGroup.Item>
         ))}
       </ListGroup>
@@ -107,21 +97,7 @@ const Chat = ({ username }) => {
           type="text"
           placeholder="Type a message..."
           value={message}
-          onChange={(e) => {
-            const val = e.target.value;
-            setMessage(val);
-
-            if (!isTyping) {
-              setIsTyping(true);
-              socketRef.current.emit("typing", { code, sender: username });
-            }
-
-            clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = setTimeout(() => {
-              setIsTyping(false);
-              socketRef.current.emit("stop_typing", { code });
-            }, 1000); // stops after 1 second idle
-          }}
+          onChange={(e) => setMessage(e.target.value)}
         />
         <Button className="mt-2" type="submit">
           Send
