@@ -35,7 +35,7 @@ const Chat = ({ username }) => {
     });
 
     socket.on("message", (data) => {
-      console.log("📥 New message received:", data);
+      console.log("📥 New message received:", data, datetime);
       setChat((prev) => [...prev, data]);
     });
 
