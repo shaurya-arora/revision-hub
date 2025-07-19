@@ -35,6 +35,14 @@ def save_chat_history(code, messages):
 def index():
     return "✅ Chat backend is running!"
 
+@socketio.on('typing')
+def handle_typing(data):
+    emit('typing', data, room=data['code'], include_self=False)
+
+@socketio.on('stop_typing')
+def handle_stop_typing(data):
+    emit('stop_typing', data, room=data['code'], include_self=False)
+
 @app.route('/clear/<room_code>', methods=['DELETE'])
 def clear_chat(room_code):
     chat_history[room_code] = []

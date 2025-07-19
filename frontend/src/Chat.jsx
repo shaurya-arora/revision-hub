@@ -10,6 +10,10 @@ const Chat = ({ username }) => {
   const { code } = useParams();
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUser, setTypingUser] = useState(null);
+  const typingTimeoutRef = useRef(null);
+
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +41,13 @@ const Chat = ({ username }) => {
     socket.on("message", (data) => {
       console.log("📥 New message received:", data);
       setChat((prev) => [...prev, data]);
+    });
+    socket.on("typing", ({ sender }) => {
+      setTypingUser(sender);
+    });
+
+    socket.on("stop_typing", () => {
+      setTypingUser(null);
     });
 
     return () => {
@@ -76,6 +87,12 @@ const Chat = ({ username }) => {
       <Button variant="danger" className="mb-3" onClick={handleClear}>
         Clear Chat
       </Button>
+      {typingUser && (
+        <div className="text-muted mb-2">
+          <em>{typingUser} is typing...</em>
+        </div>
+      )}
+
       <ListGroup className="mb-3">
         {chat.map((msg, idx) => (
           <ListGroup.Item key={idx}>
@@ -90,7 +107,21 @@ const Chat = ({ username }) => {
           type="text"
           placeholder="Type a message..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setMessage(val);
+
+            if (!isTyping) {
+              setIsTyping(true);
+              socketRef.current.emit("typing", { code, sender: username });
+            }
+
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => {
+              setIsTyping(false);
+              socketRef.current.emit("stop_typing", { code });
+            }, 1000); // stops after 1 second idle
+          }}
         />
         <Button className="mt-2" type="submit">
           Send
