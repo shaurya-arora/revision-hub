@@ -69,5 +69,11 @@ def handle_message(data):
     print(f"💬 [{timestamp}] Message in {room}: {sender}: {text}")
     emit('message', message_data, room=room)
 
+@socketio.on('typing')
+def handle_typing(data):
+    room = data['code'].strip().lower()
+    sender = data['sender']
+    emit('typing', {'sender': sender}, room=room, include_self=False)
+
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0", port=5000)

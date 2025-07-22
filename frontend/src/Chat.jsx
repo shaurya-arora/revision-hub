@@ -12,6 +12,7 @@ const Chat = ({ username }) => {
 
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
+  const [typingUser, setTypingUser] = useState(""); // ✅ New state
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -41,13 +42,19 @@ const Chat = ({ username }) => {
       setChat((prev) => [...prev, data]);
     });
 
+    socket.on("typing", (data) => {
+      if (data.sender !== username) {
+        setTypingUser(data.sender);
+        setTimeout(() => setTypingUser(""), 2000); // Clear after 2s
+      }
+    });
+
     return () => {
       socket.disconnect();
       console.log("👋 Disconnected from socket");
     };
   }, [normalizedCode]);
 
-  // 🔄 Periodic re-join to ensure sync
   useEffect(() => {
     const interval = setInterval(() => {
       if (socketRef.current?.connected) {
@@ -69,6 +76,11 @@ const Chat = ({ username }) => {
     };
     socketRef.current.emit("message", msg);
     setMessage("");
+    setTypingUser("");
+  };
+
+  const handleTyping = () => {
+    socketRef.current.emit("typing", { code: normalizedCode, sender: username });
   };
 
   const handleClear = async () => {
@@ -82,6 +94,13 @@ const Chat = ({ username }) => {
       <Button variant="danger" className="mb-3" onClick={handleClear}>
         Clear Chat
       </Button>
+
+      {typingUser && (
+        <div className="text-muted mb-2">
+          <em>{typingUser} is typing...</em>
+        </div>
+      )}
+
       <ListGroup className="mb-3">
         {chat.map((msg, idx) => (
           <ListGroup.Item key={idx}>
@@ -97,7 +116,10 @@ const Chat = ({ username }) => {
           type="text"
           placeholder="Type a message..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            handleTyping(); // ✅ Emit typing
+          }}
         />
         <Button className="mt-2" type="submit">
           Send
