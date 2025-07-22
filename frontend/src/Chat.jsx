@@ -95,12 +95,6 @@ const Chat = ({ username }) => {
         Clear Chat
       </Button>
 
-      {typingUser && (
-        <div className="text-muted mb-2">
-          <em>{typingUser} is typing...</em>
-        </div>
-      )}
-
       <ListGroup className="mb-3">
         {chat.map((msg, idx) => (
           <ListGroup.Item key={idx}>
@@ -111,6 +105,12 @@ const Chat = ({ username }) => {
         ))}
       </ListGroup>
 
+      {typingUser && (
+        <div className="text-muted mb-2">
+          <em>{typingUser} is typing...</em>
+        </div>
+      )}
+      
       <Form onSubmit={handleSend}>
         <Form.Control
           type="text"
